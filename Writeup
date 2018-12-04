@@ -1,0 +1,78 @@
+---
+title: "Practical Machine Learning Project AVR"
+author: "AVR"
+date: "November 20, 2018"
+output:
+  html_document: default
+  pdf_document: default
+---
+##EXECUTIVE SUMMARY
+The goal of this project is to use the data of 6 participants from accelerometers on the belt, forearm, arm and dumbell predict the manner in which they did the exeercise (they were asked to perform barbell lifts correctly and incorrectly in 5 different ways). What to submit : a report should be created to describe how the model was built, how cross validation was used, what is expected out of the sample error and why were the choices made. In addition, Prediction model will be used to predict 20 different cases. Only less than 2000 words and 5 or less figures will be used.
+
+##DATA
+The data to be used are : (training) https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv and (test) https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load R Packages, read and clean data
+```{r Packages Installed}
+library(caret)
+library(randomForest)
+library(corrplot)
+set.seed(2018)
+
+## Set Working Directory
+setwd("D:/DOST Coursera/Module8")
+
+## Load and Clean Data
+training_data = read.csv("pml-training.csv", na.strings=c("", "NA"))
+
+training_data = training_data[8:length(training_data)]
+cln = colSums(is.na(training_data))
+training_data = training_data[,cln == 0]
+
+inTrain = createDataPartition(training_data$classe, p = .7)[[1]]
+training = training_data[inTrain,]
+validation = training_data[-inTrain,]
+```
+## Plot correlation matrix
+```
+Correlation_Matrix <- cor(training_data[, -length(training_data)])
+corrplot(Correlation_Matrix, type = "lower", tl.cex=0.8)
+```
+
+##Compute random forest with PCA to remove correlation
+
+```
+Random_Forest <- randomForest(classe~., data = training_data, preprocessing="pca")
+print(Random_Forest)
+Random_Forest_Validation= predict(Random_Forest, validation)
+```
+
+##Estimate how well the model has been trained
+```
+print(("Random Forest Cross Validation"))
+print(Random_Forest_Validation)
+
+confusionMatrix(validation$classe, Random_Forest_Validation)
+accuracy = confusionMatrix(validation$classe, Random_Forest_Validation)$overall['Accuracy']
+acc_percentage = (1-accuracy) * 100
+print("Percentage :"); print(round(acc_percentage, digits = 2))
+```
+
+##Now we test for the 20 data set
+
+```
+test_data_set = read.csv("pml-testing.csv", na.strings=c("", "NA"))
+test_data_set = test_data_set[8:length(test_data_set)]
+test_data_set = test_data_set[,cln == 0]
+
+New_Data_Model = predict(Random_Forest, test_data_set)
+print(New_Data_Model)
+```
+##Credits 
+The data for this project come from this source: http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har. If you use the document you create for this class for any purpose please cite them as they have been very generous in allowing their data to be used for this kind of assignment.
+
+
