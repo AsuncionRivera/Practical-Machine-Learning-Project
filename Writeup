@@ -16,23 +16,17 @@ The data to be used are : (training) https://d396qusza40orc.cloudfront.net/predm
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Load R Packages, read and clean data
+## Load R Packages, read and clean data.  Split the data set to 70-30.
 ```{r Packages Installed}
 library(caret)
 library(randomForest)
 library(corrplot)
 set.seed(2018)
-
-## Set Working Directory
 setwd("D:/DOST Coursera/Module8")
-
-## Load and Clean Data
 training_data = read.csv("pml-training.csv", na.strings=c("", "NA"))
-
 training_data = training_data[8:length(training_data)]
 cln = colSums(is.na(training_data))
 training_data = training_data[,cln == 0]
-
 inTrain = createDataPartition(training_data$classe, p = .7)[[1]]
 training = training_data[inTrain,]
 validation = training_data[-inTrain,]
@@ -50,17 +44,65 @@ Random_Forest <- randomForest(classe~., data = training_data, preprocessing="pca
 print(Random_Forest)
 Random_Forest_Validation= predict(Random_Forest, validation)
 ```
+Call:
+ randomForest(formula = classe ~ ., data = training_data, preprocessing = "pca") 
+               Type of random forest: classification
+                     Number of trees: 500
+No. of variables tried at each split: 7
+
+        OOB estimate of  error rate: 0.29%
+Confusion matrix:
+     A    B    C    D    E  class.error
+A 5578    2    0    0    0 0.0003584229
+B    9 3785    3    0    0 0.0031603898
+C    0   10 3409    3    0 0.0037989480
+D    0    0   21 3192    3 0.0074626866
+E    0    0    1    4 3602 0.0013861935
 
 ##Estimate how well the model has been trained
 ```
 print(("Random Forest Cross Validation"))
 print(Random_Forest_Validation)
-
 confusionMatrix(validation$classe, Random_Forest_Validation)
 accuracy = confusionMatrix(validation$classe, Random_Forest_Validation)$overall['Accuracy']
 acc_percentage = (1-accuracy) * 100
 print("Percentage :"); print(round(acc_percentage, digits = 2))
 ```
+Confusion Matrix and Statistics
+
+          Reference
+Prediction    A    B    C    D    E
+         A 1674    0    0    0    0
+         B    0 1139    0    0    0
+         C    0    0 1026    0    0
+         D    0    0    0  964    0
+         E    0    0    0    0 1082
+
+Overall Statistics
+                                     
+               Accuracy : 1          
+                 95% CI : (0.9994, 1)
+    No Information Rate : 0.2845     
+    P-Value [Acc > NIR] : < 2.2e-16  
+                                     
+                  Kappa : 1          
+ Mcnemar's Test P-Value : NA         
+
+Statistics by Class:
+
+                     Class: A Class: B Class: C Class: D Class: E
+Sensitivity            1.0000   1.0000   1.0000   1.0000   1.0000
+Specificity            1.0000   1.0000   1.0000   1.0000   1.0000
+Pos Pred Value         1.0000   1.0000   1.0000   1.0000   1.0000
+Neg Pred Value         1.0000   1.0000   1.0000   1.0000   1.0000
+Prevalence             0.2845   0.1935   0.1743   0.1638   0.1839
+Detection Rate         0.2845   0.1935   0.1743   0.1638   0.1839
+Detection Prevalence   0.2845   0.1935   0.1743   0.1638   0.1839
+Balanced Accuracy      1.0000   1.0000   1.0000   1.0000   1.0000
+
+The accuracy is very high and this is within the 95% confidence interval
+
+We have sufficient confidence to predict for the 20 data set for the quiz
 
 ##Now we test for the 20 data set
 
@@ -68,11 +110,14 @@ print("Percentage :"); print(round(acc_percentage, digits = 2))
 test_data_set = read.csv("pml-testing.csv", na.strings=c("", "NA"))
 test_data_set = test_data_set[8:length(test_data_set)]
 test_data_set = test_data_set[,cln == 0]
-
 New_Data_Model = predict(Random_Forest, test_data_set)
 print(New_Data_Model)
 ```
+
+1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 
+ B  A  B  A  A  E  D  B  A  A  B  C  B  A  E  E  A  B  B  B 
+Levels: A B C D E
+
 ##Credits 
 The data for this project come from this source: http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har. If you use the document you create for this class for any purpose please cite them as they have been very generous in allowing their data to be used for this kind of assignment.
-
 
